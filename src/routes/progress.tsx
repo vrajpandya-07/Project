@@ -64,6 +64,29 @@ function ProgressPage() {
     active: i + 1 <= today && i + 1 > today - progress.streakDays,
   }));
 
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const currentDay = daysOfWeek[new Date().getDay()];
+  const weeklyData = daysOfWeek.map(day => {
+    if (day === currentDay) {
+      const quizScore = progress.quizzesPassed.length > 0 
+        ? Math.round(progress.quizzesPassed.reduce((acc, q) => acc + q.score, 0) / progress.quizzesPassed.length) 
+        : 0;
+      const totalMinutes = progress.lessonsCompleted.length * 30 + progress.inProgressLessons.reduce((acc, l) => acc + (l.progress * 0.3), 0);
+      return { day, minutes: Math.round(totalMinutes), score: quizScore };
+    }
+    return { day, minutes: 0, score: 0 };
+  });
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const currentMonth = months[new Date().getMonth()];
+  const monthlyData = months.map(month => {
+    if (month === currentMonth) {
+      const totalHours = (progress.lessonsCompleted.length * 30 + progress.inProgressLessons.reduce((acc, l) => acc + (l.progress * 0.3), 0)) / 60;
+      return { month, hours: Math.round(totalHours * 10) / 10 };
+    }
+    return { month, hours: 0 };
+  });
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
@@ -87,7 +110,7 @@ function ProgressPage() {
             <TabsContent value="week" className="mt-4">
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={WEEKLY_DATA}>
+                  <LineChart data={weeklyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} />
                     <YAxis stroke="var(--muted-foreground)" fontSize={12} />
@@ -101,7 +124,7 @@ function ProgressPage() {
             <TabsContent value="month" className="mt-4">
               <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={MONTHLY_DATA}>
+                  <BarChart data={monthlyData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis dataKey="month" stroke="var(--muted-foreground)" fontSize={12} />
                     <YAxis stroke="var(--muted-foreground)" fontSize={12} />

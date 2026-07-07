@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 import { Search, Clock, Languages, BookOpen, ArrowRight } from "lucide-react";
 import { LESSONS, SUBJECTS, DIFFICULTIES, LANGUAGES } from "@/lib/mock-data";
+import { useProgress } from "@/hooks/use-progress";
 
 export const Route = createFileRoute("/lessons")({
   head: () => ({ meta: [{ title: "Lessons — Vernacular STEM" }] }),
@@ -16,18 +17,27 @@ export const Route = createFileRoute("/lessons")({
 });
 
 function Lessons() {
+  const { progress } = useProgress();
   const [q, setQ] = useState("");
   const [subject, setSubject] = useState("all");
   const [difficulty, setDifficulty] = useState("all");
   const [language, setLanguage] = useState("all");
 
-  const filtered = useMemo(() => LESSONS.filter((l) => {
+  const lessonsWithProgress = useMemo(() => {
+    return LESSONS.map(l => {
+      const p = progress.inProgressLessons.find(ip => ip.id === l.id)?.progress || 
+               (progress.lessonsCompleted.includes(l.id) ? 100 : 0);
+      return { ...l, progress: p };
+    });
+  }, [progress]);
+
+  const filtered = useMemo(() => lessonsWithProgress.filter((l) => {
     if (q && !l.title.toLowerCase().includes(q.toLowerCase()) && !l.subject.toLowerCase().includes(q.toLowerCase())) return false;
     if (subject !== "all" && l.subject !== subject) return false;
     if (difficulty !== "all" && l.difficulty !== difficulty) return false;
     if (language !== "all" && l.language !== language) return false;
     return true;
-  }), [q, subject, difficulty, language]);
+  }), [lessonsWithProgress, q, subject, difficulty, language]);
 
   const diffColor = (d: string) => d === "Beginner" ? "bg-success/10 text-success" : d === "Intermediate" ? "bg-primary/10 text-primary" : "bg-warning/15 text-warning-foreground";
 
