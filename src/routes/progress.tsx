@@ -52,11 +52,29 @@ function ProgressPage() {
   
   const earnedBadges = dynamicBadges.filter(b => b.earned).length;
 
-  const dynamicMastery = [
-    ...progress.strongTopics.map(t => ({ topic: t, mastery: 85 })),
-    ...progress.weakTopics.map(t => ({ topic: t, mastery: 40 }))
-  ];
-  const topicsToDisplay = dynamicMastery.length > 0 ? dynamicMastery : TOPIC_MASTERY;
+  const subjectLessons: Record<string, string[]> = {
+    "Mathematics": ["l1", "l6"],
+    "Physics": ["l2", "l7"],
+    "Chemistry": ["l3"],
+    "Biology": ["l4", "l8"],
+    "Computer Science": ["l5"],
+  };
+
+  const topicsToDisplay = Object.entries(subjectLessons).map(([subj, lessonIds]) => {
+    let totalProgress = 0;
+    lessonIds.forEach(id => {
+      if (progress.lessonsCompleted.includes(id)) {
+        totalProgress += 100;
+      } else {
+        const ip = progress.inProgressLessons.find(l => l.id === id);
+        if (ip) {
+          totalProgress += ip.progress;
+        }
+      }
+    });
+    const avg = Math.round(totalProgress / lessonIds.length);
+    return { topic: subj, mastery: avg };
+  });
 
   const today = new Date().getDate();
   const streakCalendar = Array.from({ length: 35 }, (_, i) => ({

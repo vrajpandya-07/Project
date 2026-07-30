@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LogOut, Moon, Sun, Bell, Palette } from "lucide-react";
 import { LANGUAGES, STUDENT, DIFFICULTIES } from "@/lib/mock-data";
 import { useTheme } from "@/lib/theme";
+import { useLanguage } from "@/hooks/use-language";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
@@ -20,11 +21,13 @@ export const Route = createFileRoute("/profile")({
 
 function Profile() {
   const { theme, toggle } = useTheme();
-  const [lang, setLang] = useState("en");
+  const { lang, changeLanguage } = useLanguage();
   const [level, setLevel] = useState<string>("Intermediate");
   const [notif, setNotif] = useState({ daily: true, quiz: true, marketing: false });
   const navigate = useNavigate();
   const [student, setStudent] = useState(STUDENT);
+  const [name, setName] = useState(STUDENT.name);
+  const [email, setEmail] = useState(STUDENT.email);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -32,16 +35,37 @@ function Profile() {
       if (userStr) {
         try {
           const u = JSON.parse(userStr);
+          const nameVal = u.name || STUDENT.name;
+          const emailVal = u.email || STUDENT.email;
+          const levelVal = u.level || "Intermediate";
+          setName(nameVal);
+          setEmail(emailVal);
+          setLevel(levelVal);
           setStudent({
             ...STUDENT,
-            name: u.name || STUDENT.name,
-            email: u.email || STUDENT.email,
-            avatar: u.name ? u.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "US",
+            name: nameVal,
+            email: emailVal,
+            level: levelVal,
+            avatar: nameVal ? nameVal.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "US",
           });
         } catch (e) {}
       }
     }
   }, []);
+
+  const handleSave = () => {
+    if (typeof window !== "undefined") {
+      const updatedUser = {
+        name,
+        email,
+        level,
+        preferredLanguage: lang,
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event("user-profile-updated"));
+      toast.success("Settings saved successfully!");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -71,8 +95,8 @@ function Profile() {
       <Card className="border-border/60 shadow-card">
         <CardHeader><CardTitle>Student information</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2"><Label>Full name</Label><Input key={`name-${student.name}`} defaultValue={student.name} /></div>
-          <div className="space-y-2"><Label>Email</Label><Input key={`email-${student.email}`} defaultValue={student.email} /></div>
+          <div className="space-y-2"><Label>Full name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="space-y-2"><Label>Email</Label><Input value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="space-y-2">
             <Label>Learning level</Label>
             <Select value={level} onValueChange={setLevel}>
@@ -82,7 +106,7 @@ function Profile() {
           </div>
           <div className="space-y-2">
             <Label>Preferred language</Label>
-            <Select value={lang} onValueChange={setLang}>
+            <Select value={lang} onValueChange={changeLanguage}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{LANGUAGES.map((l) => <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>)}</SelectContent>
             </Select>
@@ -126,7 +150,7 @@ function Profile() {
 
       {/* Save + logout */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button onClick={() => toast.success("Settings saved")}>Save changes</Button>
+        <Button onClick={handleSave}>Save changes</Button>
         <Button variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => {
           localStorage.removeItem("user");
           toast.success("Signed out");
