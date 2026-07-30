@@ -28,6 +28,8 @@ import {
   CheckCircle,
   StopCircle,
   Loader2,
+  User,
+  BookOpen,
 } from "lucide-react";
 import { LESSONS, LANGUAGES } from "@/lib/mock-data";
 import { getTranslatedLesson } from "@/lib/translations";

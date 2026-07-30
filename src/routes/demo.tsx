@@ -24,6 +24,7 @@ import {
   FolderHeart,
   Save,
   Languages,
+  ArrowLeft,
 } from "lucide-react";
 import { saveRecording, getRecordings, deleteRecording, type LocalRecording } from "@/lib/db";
 import { LANGUAGES } from "@/lib/mock-data";
