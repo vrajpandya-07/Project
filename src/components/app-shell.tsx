@@ -39,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/lib/theme";
 import { LANGUAGES, STUDENT } from "@/lib/mock-data";
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/hooks/use-language";
 
 const NAV = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -91,23 +92,31 @@ function AppSidebar() {
 function TopBar() {
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
-  const [lang, setLang] = useState("en");
+  const { lang, changeLanguage } = useLanguage();
   const [student, setStudent] = useState(STUDENT);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        try {
-          const u = JSON.parse(userStr);
-          setStudent({
-            ...STUDENT,
-            name: u.name || STUDENT.name,
-            email: u.email || STUDENT.email,
-            avatar: u.name ? u.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "US",
-          });
-        } catch (e) {}
-      }
+      const loadUser = () => {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          try {
+            const u = JSON.parse(userStr);
+            setStudent({
+              ...STUDENT,
+              name: u.name || STUDENT.name,
+              email: u.email || STUDENT.email,
+              avatar: u.name ? u.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) : "US",
+            });
+          } catch (e) {}
+        }
+      };
+
+      loadUser();
+      window.addEventListener("user-profile-updated", loadUser);
+      return () => {
+        window.removeEventListener("user-profile-updated", loadUser);
+      };
     }
   }, []);
 
@@ -129,7 +138,7 @@ function TopBar() {
             <DropdownMenuLabel>Language</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {LANGUAGES.map((l) => (
-              <DropdownMenuItem key={l.code} onClick={() => setLang(l.code)}>
+              <DropdownMenuItem key={l.code} onClick={() => changeLanguage(l.code)}>
                 {l.label}
               </DropdownMenuItem>
             ))}
